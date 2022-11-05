@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from axes_utils import get_ellipses
+from axes_utils import get_ellipses, in_ellipse
 
 # define a video capture object
 def score (blue, red, green):
@@ -57,11 +57,12 @@ while (True):
 
     cv2.imwrite("Contours.png", blank)
 
+    cx = cy = 0
     for contour in contours:
         M = cv2.moments(contour)
-        if cv2.arcLength(contour, True) > 40 and cv2.contourArea(contour) != 0:
+        if cv2.arcLength(contour, True) > 35 and cv2.contourArea(contour) != 0:
             x, y, w, h = cv2.boundingRect(contour)
-            if w*h < 30000 and w*h > 300:
+            if w*h < 30000 and w*h > 250 and w/h < 1.5 and h/w < 1.5:
                 if M['m00'] != 0:
                     cx = int(M['m10'] / M['m00'])
                     cy = int(M['m01'] / M['m00'])
@@ -72,9 +73,12 @@ while (True):
 
     cv2.imwrite("image.png", output_img)
 
-    ellipses = get_ellipses(img)
+    ellipses = get_ellipses(img, True)
     for ell in ellipses:
-        cv2.ellipse(output_img, ell, (0, 255, 255))
+        if in_ellipse((cx, cy), ell):
+            elx, ely = int(ell[0][0]), int(ell[0][1])
+            cv2.circle(output_img, (elx, ely), 7, (128, 255, 255), -1)
+            cv2.ellipse(output_img, ell, (0, 255, 255))
 
     cv2.imshow('video gray', output_img)
 
