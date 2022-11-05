@@ -57,20 +57,22 @@ while (True):
 
     cv2.imwrite("Contours.png", blank)
 
-    for i in contours:
-        M = cv2.moments(i)
-        if M['m00'] != 0:
-            cx = int(M['m10'] / M['m00'])
-            cy = int(M['m01'] / M['m00'])
-            cv2.drawContours(output_img, [i], -1, (0, 255, 0), 2)
-            cv2.circle(output_img, (cx, cy), 7, (0, 0, 255), -1)
-            cv2.putText(output_img, "center", (cx - 20, cy - 20),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
-        break
+    for contour in contours:
+        M = cv2.moments(contour)
+        if cv2.arcLength(contour, True) > 40 and cv2.contourArea(contour) != 0:
+            x, y, w, h = cv2.boundingRect(contour)
+            if w*h < 30000 and w*h > 300:
+                if M['m00'] != 0:
+                    cx = int(M['m10'] / M['m00'])
+                    cy = int(M['m01'] / M['m00'])
+                    cv2.drawContours(output_img, [contour], -1, (0, 255, 0), 2)
+                    cv2.circle(output_img, (cx, cy), 7, (0, 0, 255), -1)
+                    cv2.putText(output_img, "center", (cx - 20, cy - 20),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
 
     cv2.imwrite("image.png", output_img)
 
-    ellipses = get_ellipses(output_img)
+    ellipses = get_ellipses(img)
     for ell in ellipses:
         cv2.ellipse(output_img, ell, (0, 255, 255))
 

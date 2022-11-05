@@ -27,12 +27,17 @@ def get_ellipses(image, debug = False):
     segmented_image = centers[labels]
     segmented_image = segmented_image.reshape(shape)
 
+    el_1 = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    segmented_image = cv2.erode(segmented_image, el_1, iterations=3)
+    if debug:
+        cv2.imshow("segmented", segmented_image)
     # Canny Edge Detection
     edges = cv2.Canny(image=segmented_image, threshold1=20, threshold2=50)  # Canny Edge Detection
 
+    el_2 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     # Display Canny Edge Detection Image
-    el = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    edges = cv2.dilate(edges, el, iterations=1)
+    edges = cv2.dilate(edges, el_2, iterations=1)
+
     contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     if debug:
         cv2.imshow("Edges", edges)
@@ -42,22 +47,26 @@ def get_ellipses(image, debug = False):
     for i, contour in enumerate(contours):
         if cv2.arcLength(contour, True) > 70 and cv2.contourArea(contour) != 0:
             x, y, w, h = cv2.boundingRect(contour)
-            if w*h > 15000:
+            if w*h > 10000:
                 big_contours_ind.append(i)
 
+    canvas = np.zeros(shape)
     for ind in big_contours_ind:
         if hierarchy[0][ind][3] not in big_contours_ind:
             ellipse = cv2.fitEllipse(contours[ind])
             ellipses.append(ellipse)
+            cv2.ellipse(canvas, ellipse, (255, 255, 0))
+        cv2.imshow("Ellipses", canvas)
 
     if debug:
+        used_contours = []
         canvas = np.zeros(shape)
-        used_contours = contours[np.array(big_contours_ind)]
+        for ind in big_contours_ind:
+            used_contours.append(contours[ind])
         cv2.drawContours(canvas, used_contours, -1, (0, 0, 255), 1)
         cv2.imshow("Edges", edges)
         cv2.imshow("Contours", canvas)
 
-    cv2.waitKey(0)
     return ellipses
 
 
@@ -71,5 +80,9 @@ def get_direction():
 
 if __name__ == "__main__":
     vid = cv2.VideoCapture(1)
-    ret, img = vid.read()
-    ellipses = get_ellipses(img, True)
+    while True:
+        ret, img = vid.read()
+        cv2.imshow("og", img)
+        ellipses = get_ellipses(img, True)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
