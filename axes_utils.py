@@ -11,9 +11,8 @@ def resize(image):
     return cv2.resize(image, (w, h))
 
 
-def get_ellipses(image):
-    shape = image.shape
-
+def get_ellipses(image, debug = False):
+    shape = image.shape[:2]
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     pixel_values = image.reshape((-1, 1))
     pixel_values = np.float32(pixel_values)
@@ -26,7 +25,7 @@ def get_ellipses(image):
 
     labels = labels.flatten()
     segmented_image = centers[labels]
-    segmented_image = segmented_image.reshape(image.shape)
+    segmented_image = segmented_image.reshape(shape)
 
     # Canny Edge Detection
     edges = cv2.Canny(image=segmented_image, threshold1=20, threshold2=50)  # Canny Edge Detection
@@ -35,11 +34,11 @@ def get_ellipses(image):
     el = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     edges = cv2.dilate(edges, el, iterations=1)
     contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    if debug:
+        cv2.imshow("Edges", edges)
 
     big_contours_ind = []
     ellipses = []
-
-    canvas = np.zeros(shape, dtype='uint8')
     for i, contour in enumerate(contours):
         if cv2.arcLength(contour, True) > 70 and cv2.contourArea(contour) != 0:
             x, y, w, h = cv2.boundingRect(contour)
@@ -50,11 +49,15 @@ def get_ellipses(image):
         if hierarchy[0][ind][3] not in big_contours_ind:
             ellipse = cv2.fitEllipse(contours[ind])
             ellipses.append(ellipse)
-            cv2.ellipse(canvas, ellipse, (0, 0, 255))
 
-    cv2.imshow("Ellipses", canvas)
+    if debug:
+        canvas = np.zeros(shape)
+        used_contours = contours[np.array(big_contours_ind)]
+        cv2.drawContours(canvas, used_contours, -1, (0, 0, 255), 1)
+        cv2.imshow("Edges", edges)
+        cv2.imshow("Contours", canvas)
+
     cv2.waitKey(0)
-
     return ellipses
 
 
@@ -67,5 +70,6 @@ def get_direction():
 
 
 if __name__ == "__main__":
-    im = cv2.imread("black_bg_1.jpg")
-    ellipses = get_ellipses(im)
+    vid = cv2.VideoCapture(1)
+    ret, img = vid.read()
+    ellipses = get_ellipses(img, True)
