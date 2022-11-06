@@ -13,7 +13,7 @@ def score (blue, red, green):
 
 
 
-vid = cv2.VideoCapture(1)
+vid = cv2.VideoCapture("/dev/video2")#1)
 
 while (True):
     ret, img = vid.read()
@@ -73,12 +73,49 @@ while (True):
 
     cv2.imwrite("image.png", output_img)
 
-    ellipses = get_ellipses(img, True)
+    ellipses = get_ellipses(img, False)
     for ell in ellipses:
         if in_ellipse((cx, cy), ell):
             elx, ely = int(ell[0][0]), int(ell[0][1])
             cv2.circle(output_img, (elx, ely), 7, (128, 255, 255), -1)
             cv2.ellipse(output_img, ell, (0, 255, 255))
+
+
+ 
+ 
+ 
+    start_point = (cx, cy)
+    # End coordinate
+    end_point = (elx, ely)
+    # Red color in BGR
+    color = (0, 0, 255)
+    # Line thickness of 9 px
+    thickness = 2
+    # Using cv2.arrowedLine() method
+    # Draw a red arrow line
+    # with thickness of 9 px and tipLength = 0.5
+
+    image = cv2.arrowedLine(output_img, start_point, end_point,
+                            color, thickness, tipLength=0.1)
+    cv2.line(output_img, (320, 210), (320, 270), color, 5)
+    cv2.line(output_img, (290, 240), (350, 240), color, 5) ###
+    # then change to yellow when x-y centered
+    if 310 <= end_point[0] <= 330:
+        if 230 <= end_point[1] <= 250:
+            cv2.line(output_img, (320, 210), (320, 270), (0, 255, 255), 5)
+            cv2.line(output_img, (290, 240), (350, 240), (0, 255, 255), 5)
+            cv2.putText(output_img, "x-y position centered", (30, 20),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+            # similar for tilt centering (can embed in above)  
+            if 310 <= start_point[0] <= 330:
+                if 230 <= start_point[1] <= 250:
+                    cv2.line(output_img, (320, 210), (320, 270), (0, 255, 0), 5)
+                    cv2.line(output_img, (290, 240), (350, 240), (0, 255, 0), 5)
+                    cv2.putText(output_img, "tilt centered", (250, 20),
+                                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2) 
+
+
+
 
     cv2.imshow('video gray', output_img)
 
