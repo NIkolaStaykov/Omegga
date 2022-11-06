@@ -99,7 +99,7 @@ while (True):
     # Draw a red arrow line
     # with thickness of 9 px and tipLength = 0.5
 
-    #image = cv2.arrowedLine(output_img, start_point, end_point,color, thickness, tipLength=0.1)
+    image = cv2.arrowedLine(output_img, start_point, end_point,color, thickness, tipLength=0.1)
     cv2.line(output_img, (320, 210), (320, 270), color, 5)
     cv2.line(output_img, (290, 240), (350, 240), color, 5) ###
     # then change to yellow when x-y centered
