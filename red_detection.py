@@ -14,11 +14,13 @@ def score (blue, red, green):
 
 
 vid = cv2.VideoCapture("/dev/video2")#1)
+#vid.set(cv2.CAP_PROP_EXPOSURE, 400)
 
 while (True):
     ret, img = vid.read()
+    img2 = img.copy()
 
-    cv2.imshow('frame', img)
+    #cv2.imshow('frame', img)
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # lower mask (0-10)
@@ -79,6 +81,8 @@ while (True):
             elx, ely = int(ell[0][0]), int(ell[0][1])
             cv2.circle(output_img, (elx, ely), 7, (128, 255, 255), -1)
             cv2.ellipse(output_img, ell, (0, 255, 255))
+            cv2.ellipse(img2, ell, (0, 255, 255))
+
 
 
  
@@ -95,8 +99,7 @@ while (True):
     # Draw a red arrow line
     # with thickness of 9 px and tipLength = 0.5
 
-    image = cv2.arrowedLine(output_img, start_point, end_point,
-                            color, thickness, tipLength=0.1)
+    #image = cv2.arrowedLine(output_img, start_point, end_point,color, thickness, tipLength=0.1)
     cv2.line(output_img, (320, 210), (320, 270), color, 5)
     cv2.line(output_img, (290, 240), (350, 240), color, 5) ###
     # then change to yellow when x-y centered
@@ -116,7 +119,7 @@ while (True):
 
 
 
-
+    cv2.imshow('frame', img2)
     cv2.imshow('video gray', output_img)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
