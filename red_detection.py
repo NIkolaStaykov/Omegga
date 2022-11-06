@@ -13,7 +13,7 @@ def score (blue, red, green):
 
 
 
-vid = cv2.VideoCapture("/dev/video2")#1)
+vid = cv2.VideoCapture(1)
 
 while (True):
     ret, img = vid.read()
@@ -45,7 +45,6 @@ while (True):
     # change it with your absolute path for the image
     ret, thresh = cv2.threshold(mask, 200, 255,
                                cv2.THRESH_BINARY_INV)
-    cv2.imwrite("thresh.png", thresh)
 
     contours, hierarchies = cv2.findContours(
         thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -55,9 +54,10 @@ while (True):
     cv2.drawContours(blank, contours, -1,
                      (255, 0, 0), 1)
 
-    cv2.imwrite("Contours.png", blank)
-
     cx = cy = 0
+    frame_center = np.array(img.shape[:2])/2
+    min_dist = np.inf
+    fixed_x, fixed_y = (0, 0)
     for contour in contours:
         M = cv2.moments(contour)
         if cv2.arcLength(contour, True) > 35 and cv2.contourArea(contour) != 0:
@@ -66,25 +66,30 @@ while (True):
                 if M['m00'] != 0:
                     cx = int(M['m10'] / M['m00'])
                     cy = int(M['m01'] / M['m00'])
-                    cv2.drawContours(output_img, [contour], -1, (0, 255, 0), 2)
-                    cv2.circle(output_img, (cx, cy), 7, (0, 0, 255), -1)
-                    cv2.putText(output_img, "center", (cx - 20, cy - 20),
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+                    # cv2.drawContours(output_img, [contour], -1, (0, 255, 0), 2)
 
-    cv2.imwrite("image.png", output_img)
+                    if np.linalg.norm(frame_center-(cx, cy)) < min_dist:
+                        min_dist = np.linalg.norm(frame_center-(cx, cy))
+                        fixed_x = cx
+                        fixed_y = cy
+
+    cv2.circle(output_img, (fixed_x, fixed_y), 7, (0, 0, 255), -1)
+    cv2.putText(output_img, "center", (fixed_x - 20, fixed_y - 20),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
 
     ellipses = get_ellipses(img, False)
+    fixed_ellipse = 0
+    elx = ely = 0
+    min_dist = np.inf
     for ell in ellipses:
-        if in_ellipse((cx, cy), ell):
+        if np.linalg.norm(ell[0] - np.array([fixed_x, fixed_y])) < min_dist:
+            min_dist = np.linalg.norm(ell[0] - np.array([fixed_x, fixed_y]))
             elx, ely = int(ell[0][0]), int(ell[0][1])
-            cv2.circle(output_img, (elx, ely), 7, (128, 255, 255), -1)
-            cv2.ellipse(output_img, ell, (0, 255, 255))
-
-
+            fixed_ellipse = ell
+    cv2.circle(output_img, (elx, ely), 7, (128, 255, 255), -1)
+    cv2.ellipse(output_img, fixed_ellipse, (0, 255, 255))
  
- 
- 
-    start_point = (cx, cy)
+    start_point = (fixed_x, fixed_y)
     # End coordinate
     end_point = (elx, ely)
     # Red color in BGR
