@@ -13,7 +13,7 @@ def score (blue, red, green):
 
 
 
-vid = cv2.VideoCapture("/dev/video2")#1)
+vid = cv2.VideoCapture(0)
 
 while (True):
     ret, img = vid.read()
@@ -58,6 +58,9 @@ while (True):
     cv2.imwrite("Contours.png", blank)
 
     cx = cy = 0
+    frame_center = np.array(img.shape[:2])/2
+    fixed_x, fixed_y = (0, 0)
+    min_dist = np.inf
     for contour in contours:
         M = cv2.moments(contour)
         if cv2.arcLength(contour, True) > 35 and cv2.contourArea(contour) != 0:
@@ -67,24 +70,31 @@ while (True):
                     cx = int(M['m10'] / M['m00'])
                     cy = int(M['m01'] / M['m00'])
                     cv2.drawContours(output_img, [contour], -1, (0, 255, 0), 2)
-                    cv2.circle(output_img, (cx, cy), 7, (0, 0, 255), -1)
-                    cv2.putText(output_img, "center", (cx - 20, cy - 20),
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+
+                if np.linalg.norm(np.array([cx, cy]) - frame_center) < min_dist:
+                    min_dist = np.linalg.norm(np.array([cx, cy]) - frame_center)
+                    (fixed_x, fixed_y) = np.array([cx, cy])
+
+    cv2.circle(output_img, (fixed_x, fixed_y), 7, (0, 0, 255), -1)
+    cv2.putText(output_img, "center", (fixed_x - 20, fixed_y - 20),
+               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
 
     cv2.imwrite("image.png", output_img)
 
+    min_dist = np.inf
     ellipses = get_ellipses(img, False)
+    fixed_ellipse = 0
     for ell in ellipses:
-        if in_ellipse((cx, cy), ell):
-            elx, ely = int(ell[0][0]), int(ell[0][1])
-            cv2.circle(output_img, (elx, ely), 7, (128, 255, 255), -1)
-            cv2.ellipse(output_img, ell, (0, 255, 255))
+        if np.linalg.norm(np.array([fixed_x, fixed_y]) - ell[0]) < min_dist:
+            min_dist = np.linalg.norm(np.array([fixed_x, fixed_y]) - ell[0])
+            fixed_ellipse = ell
 
+    elx, ely = np.array(fixed_ellipse[0]).astype(int)
+    if in_ellipse((fixed_x, fixed_y), fixed_ellipse):
+        cv2.circle(output_img, (elx, ely), 7, (128, 255, 255), -1)
+        cv2.ellipse(output_img, fixed_ellipse, (0, 255, 255))
 
- 
- 
- 
-    start_point = (cx, cy)
+    start_point = (fixed_x, fixed_y)
     # End coordinate
     end_point = (elx, ely)
     # Red color in BGR

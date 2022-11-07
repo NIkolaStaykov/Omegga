@@ -74,7 +74,7 @@ def in_ellipse(point_coords, ellipse):
     (px, py) = point_coords
     elx, ely = ellipse[0]
     ell_radii = ellipse[1]
-    ell_angle = ellipse[2]
+    ell_angle = ellipse[2]*np.pi/180
     return ((np.cos(ell_angle)*(px - elx) + np.sin(ell_angle)*(py-ely))**2)/(ell_radii[0]**2) +\
            ((np.sin(ell_angle)*(px - elx) - np.cos(ell_angle)*(py-ely))**2)/(ell_radii[1]**2) < 1
 
